@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Beranda | T-POS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('searchInput').addEventListener('keyup', function () {
+            const query = this.value;
+            fetch(`/search_products?q=${encodeURIComponent(query)}`, {
+                credentials: 'include'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('productTable');
+                    tableBody.innerHTML = '';
+                    if (data.length === 0) {
+                        tableBody.innerHTML = '<tr><td colspan="4">Tidak ada produk ditemukan.</td></tr>';
+                    } else {
+                        data.forEach(product => {
+                            const row = `
+                                <tr>
+                                    <td>${product.produk}</td>
+                                    <td>Rp ${parseInt(product.harga).toLocaleString('id-ID')}</td>
+                                    <td>${product.stok}</td>
+                                    <td>
+                                        <form action="/add/${product.id}" method="post" style="display: flex; gap: 8px;">
+                                            <input type="number" name="qty" value="1" min="1" max="${product.stok}" style="width: 60px;">
+                                            <button class="btn-primary" type="submit">Tambah</button>
+                                        </form>
+                                    </td>
+                                </tr>`;
+                            tableBody.innerHTML += row;
+                        });
+                    }
+                })
+                .catch(error => console.error("Gagal fetch data:", error));
+        });
+    });
+</script>
+
+<body>
+    <header>
+        <h1>T-POS</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Beranda</a>
+            <a href="{{ url_for('view_cart') }}">Keranjang ({{ cart_count }})</a>
+            <a href="{{ url_for('view_nota') }}">Nota</a>
+            <a href="{{ url_for('admin') }}">Admin</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="flash-messages">
+              {% for message in messages %}
+                <p>{{ message }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <h2>Daftar Produk</h2>
+            <input type="text" id="searchInput" placeholder="Cari produk..." style="margin-bottom: 16px; padding: 8px; width: 100%;">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produk</th>
+                        <th>Harga</th>
+                        <th>Stok</th>
+                        <th>Beli</th>
+                    </tr>
+                </thead>
+                
+                <tbody id="productTable">
+                    {% for _, product in products.iterrows() %}
+                    <tr>
+                        <td>{{ product.produk }}</td>
+                        <td>Rp {{ "{:,.0f}".format(product.harga) }}</td>
+                        <td>{{ product.stok }}</td>
+                        <td>
+                            <form action="{{ url_for('add_to_cart', product_id=product.id) }}" method="post" style="display: flex; gap: 8px;">
+                                <input type="number" name="qty" value="1" min="1" max="{{ product.stok }}" style="width: 60px;">
+                                <button class="btn-primary" type="submit">Tambah</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; {{ 2025 }} T-POS</p>
+    </footer>
+</body>
+</html>
+

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Daftar Nota | T-POS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Daftar Nota | T-POS</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Kembali Ke Toko</a>
+        </nav>
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% endwith %}
+
+        <h2>Riwayat Transaksi / Nota</h2>
+
+        <!-- Form pencarian -->
+        <form method="get" action="{{ url_for('view_nota') }}" style="margin-bottom: 20px;">
+            <input type="text" name="q" placeholder="Cari ID nota atau nama pelanggan" value="{{ request.args.get('q', '') }}">
+            <button type="submit">Cari</button>
+        </form>
+
+        {% if notas %}
+            {% for id_nota, data in notas.items() %}
+                <div class="nota">
+                    <h3>ID Nota: {{ id_nota }}</h3>
+                    <p><strong>Nama Pelanggan:</strong> {{ data.nama_pelanggan }}</p>
+                    <p><strong>Tanggal:</strong> {{ data.tanggal }}</p>
+                    <p><strong>Total Keranjang:</strong> Rp {{ "{:,.0f}".format(data.total_keranjang) }}</p>
+                    <p><strong>Potongan Harga:</strong> Rp {{ "{:,.0f}".format(data.potongan_harga) }}</p>
+                    <p><strong>Total Bayar:</strong> Rp {{ "{:,.0f}".format(data.total_bayar) }}</p>
+                    
+                    <h4>Daftar Produk:</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Produk</th>
+                                <th>Qty</th>
+                                <th>Harga</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in data.produk %}
+                            <tr>
+                                <td>{{ item.nama_produk }}</td>
+                                <td>{{ item.qty }}</td>
+                                <td>Rp {{ "{:,.0f}".format(item.harga) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <a href="{{ url_for('cetak_nota', id_nota=id_nota) }}" target="_blank" class="print-button">🖨️ Cetak Nota</a>
+                    <hr>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Tidak ada nota ditemukan.</p>
+        {% endif %}
+    </main>
+
+    <footer>
+        <p>&copy; 2025 T-POS</p>
+    </footer>
+</body>
+</html>

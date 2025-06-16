@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Data Penjualan | T-POS Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<header>
+    <h1>Data Penjualan | T-POS</h1>
+    <nav>
+        <a href="{{ url_for('admin') }}">Kembali Ke Dashboard</a>
+        <a href="{{ url_for('admin_sales_add') }}">Tambah Penjualan</a>
+
+    </nav>
+</header>
+
+<main>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <ul class="flash-messages">
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+    {% endwith %}
+
+    <div>
+        <form method="GET" action="{{ url_for('admin_sales') }}">
+            <label for="filter_bulan">Filter Bulan:</label>
+            <select id="filter_bulan" name="filter_bulan" onchange="this.form.submit()">
+                <option value="">Semua Bulan</option>
+                <option value="January">Januari</option>
+                <option value="February">Februari</option>
+                <option value="March">Maret</option>
+                <option value="April">April</option>
+                <option value="May">Mei</option>
+                <option value="June">Juni</option>
+                <option value="July">Juli</option>
+                <option value="August">Agustus</option>
+                <option value="September">September</option>
+                <option value="October">Oktober</option>
+                <option value="November">November</option>
+                <option value="December">Desember</option>
+            </select>
+
+            <label for="filter_tahun">Filter Tahun:</label>
+            <select id="filter_tahun" name="filter_tahun" onchange="this.form.submit()">
+                <option value="">Semua Tahun</option>
+                {% for year in range(2020, datetime.now().year + 1) %}
+                    <option value="{{ year }}">{{ year }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    <!-- Chart Section -->
+    <div style="max-width: 1500px; margin: 2rem auto;">
+        <canvas id="salesChart"></canvas>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Produk</th>
+                    <th>Qty</th>
+                    <th>Harga</th>
+                    <th>Total</th>
+                    <th>Tanggal</th>
+                    <th>Bulan</th>
+                    <th>Tahun</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for _, sale in sales.iterrows() %}
+                <tr>
+                    <td data-label = "ID Penjualan">{{ sale['id_penjualan'] }}</td>
+                    <td data-label = "Produk">{{ sale['nama_produk'] }}</td>
+                    <td data-label = "Qty">{{ sale['qty'] }}</td>
+                    <td data-label = "Harga">Rp{{ "{:,.0f}".format(sale['harga']).replace(",", ".") }}</td>
+                    <td data-label = "Total Harga">Rp{{ "{:,.0f}".format(sale['total_harga']).replace(",", ".") }}</td>
+                    <td data-label = "Tanggal">{{ sale['tanggal'] }}</td>
+                    <td data-label = "Bulan">{{ sale['bulan'] }}</td>
+                    <td data-label = "Tahun">{{ sale['tahun'] }}</td>
+                    <td data-label = "Aksi">
+                        <a href="{{ url_for('admin_sales_delete', sale_id=sale['id_penjualan']) }}"
+                           onclick="return confirm('Yakin hapus penjualan ini?')">
+                            <button class="btn-delete">Hapus</button>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</main>
+
+<footer>
+    <p>&copy; 2025 T-POS</p>
+</footer>
+
+<!-- Chart Script -->
+ <script>
+    try {
+        const salesData = JSON.parse('{{ sales_data | tojson | safe }}');
+        console.log("✅ salesData berhasil di-parse:", salesData);
+
+        if (salesData.length > 0) {
+            const productTotals = {};
+
+            salesData.forEach(sale => {
+                const name = sale.nama_produk;
+                const total = parseFloat(sale.total_harga) || 0;
+                productTotals[name] = (productTotals[name] || 0) + total;
+            });
+
+            const labels = Object.keys(productTotals);
+            const data = Object.values(productTotals);
+
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Penjualan per Produk (Rp)',
+                        data: data,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'Rp' + value.toLocaleString('id-ID');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            console.warn('⚠️ salesData kosong, chart tidak dibuat.');
+        }
+    } catch (e) {
+        console.error("❌ Gagal parse salesData:", e);
+    }
+</script>
+
+<script>
+    const salesData = JSON.parse('{{ sales_data | tojson | safe }}');
+
+    if (salesData.length > 0) {
+        const productTotals = {};
+
+        salesData.forEach(sale => {
+            const name = sale.nama_produk;
+            const total = Number(sale.total_harga) || 0;
+            productTotals[name] = (productTotals[name] || 0) + total;
+        });
+
+        const labels = Object.keys(productTotals);
+        const data = Object.values(productTotals);
+
+        // Hancurkan chart sebelumnya jika ada
+        if (window.salesChartInstance) {
+            window.salesChartInstance.destroy();
+        }
+
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        window.salesChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Penjualan per Produk (Rp)',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'Rp' + value.toLocaleString('id-ID');
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        console.warn('salesData kosong, chart tidak dibuat.');
+    }
+</script>
+
+
+
+
+</body>
+</html>

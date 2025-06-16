@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Laporan Penjualan | T-POS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+    <h1>Laporan Penjualan | T-POS</h1>
+    <nav>
+        <a href="{{ url_for('admin') }}">Kembali Ke Dashboard</a>
+    </nav>
+</header>
+
+<main>
+    <div class="form-card" style="max-width: 800px;">
+        <h2>Filter Penjualan per Tanggal</h2>
+        <form method="POST">
+            <label for="tanggal_awal">Tanggal Awal:</label>
+            <input type="date" name="tanggal_awal" required value="{{ tanggal_awal }}">
+
+            <label for="tanggal_akhir">Tanggal Akhir:</label>
+            <input type="date" name="tanggal_akhir" required value="{{ tanggal_akhir }}">
+
+            <button type="submit">Tampilkan</button>
+        </form>
+    </div>
+
+    {% if sales %}
+    <div class="table-container">
+        <h2 style="margin-top: 2rem;">Hasil Laporan</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Produk</th>
+                    <th>Qty</th>
+                    <th>Harga</th>
+                    <th>Total</th>
+                    <th>Tanggal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in sales %}
+                <tr>
+                    <td>{{ item.id_penjualan }}</td>
+                    <td>{{ item.nama_produk }}</td>
+                    <td>{{ item.qty }}</td>
+                    <td>Rp{{ "{:,.0f}".format(item.harga).replace(",", ".") }}</td>
+                    <td>Rp{{ "{:,.0f}".format(item.total_harga).replace(",", ".") }}</td>
+                    <td>{{ item.tanggal.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <p style="margin-top: 1rem; font-weight: bold;">Total Penjualan: Rp{{ "{:,.0f}".format(total).replace(",", ".") }}</p>
+    </div>
+    {% endif %}
+</main>
+
+<footer>
+    <p>&copy; 2025 T-POS </p>
+</footer>
+
+</body>
+</html>

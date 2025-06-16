@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Keranjang | T-POS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<script>
+    function formatRupiah(number) {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+        }).format(number);
+    }
+
+    function updateTotal() {
+        const subtotal = parseInt("{{ total }}");
+        const potonganInput = document.getElementById('potongan_harga');
+        const totalBayarEl = document.getElementById('total_bayar');
+        const hiddenInput = document.getElementById('hidden_potongan');
+
+        let potongan = parseInt(potonganInput.value) || 0;
+        if (potongan > subtotal) potongan = subtotal;
+
+        const totalBayar = subtotal - potongan;
+        totalBayarEl.textContent = formatRupiah(totalBayar);
+        hiddenInput.value = potongan;
+    }
+</script>
+
+<body>
+    <header>
+        <h1>Keranjang | T-POS</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Kembali Ke Toko</a>
+        </nav>
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% endwith %}
+
+        {% if cart %}
+        <!-- Tabel keranjang belanja tanpa form -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produk</th>
+                        <th>Harga</th>
+                        <th>Jumlah</th>
+                        <th>Total</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for key, item in cart.items() %}
+                    <tr>
+                        <td>{{ item.produk }}</td>
+                        <td>Rp {{ "{:,.0f}".format(item.harga) }}</td>
+                        <td>{{ item.qty }}</td>
+                        <td>Rp {{ "{:,.0f}".format(item.harga * item.qty) }}</td>
+                        <td>
+                            <a class="btn-danger" href="{{ url_for('remove_from_cart', product_id=item.id) }}">Hapus</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Ringkasan dan tombol aksi -->
+<div class="cart-summary">
+    <form method="post" action="{{ url_for('checkout') }}">
+        <label for="nama_pelanggan">Nama Pelanggan:</label>
+        <input type="text" id="nama_pelanggan" name="nama_pelanggan" required>
+
+        <label for="potongan_harga">Potongan Harga:</label>
+        <input type="number" id="potongan_harga" name="potongan_harga" value="0" min="0" oninput="updateTotal()">
+        
+        <!-- Menyimpan potongan untuk JS -->
+        <input type="hidden" id="hidden_potongan" name="potongan_harga" value="0">
+
+        <p><strong>Total Bayar:</strong> Rp <span id="total_bayar">{{ "{:,.0f}".format(total) }}</span></p>
+
+        <div class="cart-buttons">
+            <a class="btn-danger" href="{{ url_for('clear_cart') }}">Kosongkan</a>
+            <button type="submit" class="btn btn-success">Checkout</button>
+        </div>
+    </form>
+</div>
+
+        {% else %}
+        <div class="empty-state">
+            <p>Keranjang kosong. <a href="{{ url_for('index') }}">Kembali belanja</a></p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+    </main>
+
+    <footer>
+        <p>&copy; {{ 2025 }} T-POS</p>
+    </footer>
+</body>
+</html>
+
+
+

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cetak Nota</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        function getCurrentTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+        function updateTimeOnPrint() {
+            document.getElementById('current-time').textContent = getCurrentTime();
+            window.print();
+        }
+    </script>
+</head>
+<body>
+    <main>
+        <section class="nota">
+            <div class="header">
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Toko" class="logo">
+                </div>
+                <h3 class="center">BL SIPEA-PEA</h3>
+                <p class="center">Jl. SIMPANG HKBP SIPEA-PEA</p>
+                <p class="center">Telp: 0823-6093-1427</p>
+            </div>
+
+            <div class="transaction-info">
+                <p><strong>No.</strong> {{ transaksi.id_nota }} - {{ transaksi.rand }}</p>
+                <p><strong>Pelanggan:</strong> {{ transaksi.nama_pelanggan }}</p>
+                <p><strong>Tanggal:</strong> {{ transaksi.tanggal }} <span id="current-time"></span></p>
+            </div>
+
+            <ul class="produk-list">
+                <li class="header">
+                    <span class="nama-produk">Produk</span>
+                    <span class="subtotal">Subtotal</span>
+                </li>
+                {% for item in transaksi.produk %}
+                <li class="produk-item">
+                    <div class="produk-detail">
+                        <span class="no-urut">{{ loop.index }}.</span> {# Tambahkan ini untuk nomor urut #}
+                        <span class="nama-produk">{{ item.nama_produk }}</span>
+                        <span class="harga-satuan">{{ item.qty }} X {{ "{:,.0f}".format(item.harga or 0) }}</span>
+                    </div>
+                    <span class="subtotal">{{ "{:,.0f}".format(item.subtotal or 0) }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+
+            <div class="summary">
+                <div><span>Total:</span> <span>{{ "{:,.0f}".format(transaksi.total_keranjang or 0) }}</span></div>
+                <div><span>Diskon:</span> <span>{{ "{:,.0f}".format(transaksi.potongan_harga or 0) }}</span></div>
+                <div class="total"><span>TOTAL BAYAR:</span> <strong>{{ "{:,.0f}".format(transaksi.total_bayar or 0) }}</strong></div>
+            </div>
+
+            <div class="footer">
+                <p class="center">TERIMA KASIH TELAH BERBELANJA</p>
+            </div>
+
+            <button class="print-button" onclick="updateTimeOnPrint()">Cetak</button>
+        </section>
+    </main>
+</body>
+</html>

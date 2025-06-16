@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Tambah Penjualan | T-POS Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+    <h1>Tambah Penjualan Manual | T-POS</h1>
+    <nav>
+        <a href="{{ url_for('admin') }}">Kembali Ke Dashboard</a>
+    </nav>
+</header>
+
+<main>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <ul class="flash-messages">
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('admin_sales_add') }}" method="post" class="form-card">
+        <h2>Tambah Transaksi</h2>
+
+        <label for="id_produk">Pilih Produk:</label>
+        <select name="id_produk" id="id_produk" required>
+            {% for _, product in products.iterrows() %}
+            <option value="{{ product['id'] }}">{{ product['produk'] }} - Rp{{ "{:,.0f}".format(product['harga']) }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="qty">Jumlah:</label>
+        <input type="number" id="qty" name="qty" required min="1">
+
+        <button type="submit" class="btn-primary">Simpan Penjualan</button>
+        <a href="{{ url_for('admin_sales') }}"><button type="button" class="btn-secondary">Batal</button></a>
+    </form>
+</main>
+
+<footer>
+    <p>&copy; 2025 T-POS</p>
+</footer>
+
+</body>
+</html>
+
+
